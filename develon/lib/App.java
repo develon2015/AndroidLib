@@ -17,18 +17,19 @@ import java.util.Date;
 import java.util.Locale;
 
 public abstract class App extends Application {
+    public static SharedPreferences pre;
     public static final boolean DEBUG = true;
+
     private static final String defLang = "app_default_language";
 
     private static App app;
     private static Thread mainThread;
     private static Handler handler;
-    SharedPreferences pre;
 
     {
-        this.app = this;
-        this.mainThread = Thread.currentThread();
-        this.handler = new Handler();
+        app = this;
+        mainThread = Thread.currentThread();
+        handler = new Handler();
     }
 
     @Override
@@ -41,12 +42,16 @@ public abstract class App extends Application {
             if (loc.length != 2) {
                 setDefaultLanguage(locale);
             } else {
-                locale = new Locale(loc[0], loc[1]);
+                if ("??".equals(loc[1]))
+                    // 无区域设置
+                    locale = new Locale(loc[0]);
+                else
+                    locale = new Locale(loc[0], loc[1]);
+                getResources().getConfiguration().setLocale(locale);
+                getResources().updateConfiguration(getResources().getConfiguration(), getResources().getDisplayMetrics());
             }
-            getResources().getConfiguration().setLocale(locale);
-            getResources().updateConfiguration(getResources().getConfiguration(), getResources().getDisplayMetrics());
         } else {
-            App.toast("系统版本太低, 无法设置语言首选项");
+            toast("系统版本太低, 无法设置语言首选项");
         }
     }
 
@@ -129,8 +134,8 @@ public abstract class App extends Application {
             country = "??";
         }
         String value = locale.getLanguage() + "_r" + country;
-        if (!value.matches("^...?_r..$")) { // 有效的 Locale 值类似 "zh_rTW zh_rHK jp_r
-            App.log(value + "不是有效的 Locale 值");
+        if (!value.matches("^...?_r..$")) { // 有效的 Locale 值类似 "zh_rTW zh_rHK ja_JP"
+            log(value + "不是有效的 Locale 值");
             return false;
         }
         boolean r = pre.edit().putString(defLang, value).commit();
