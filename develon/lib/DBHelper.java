@@ -6,8 +6,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.HashMap;
 
-import androidx.annotation.Nullable;
-
 /**
  * 用途:
  * 管理 SQLite 数据库
