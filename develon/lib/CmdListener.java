@@ -14,7 +14,11 @@ public class CmdListener implements View.OnKeyListener {
     Class<? extends CmdExecutor> cmdExecutor;
 
     public static interface CmdExecutor {
-        public void test(String param);
+        default public void test(String param) {
+            App.toast("你好");
+        }
+
+        public void foo(String param);
     }
 
     public CmdListener(Class<? extends CmdExecutor> cmdExecutor) {
