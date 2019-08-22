@@ -47,8 +47,8 @@ public abstract class App extends Application {
                     locale = new Locale(loc[0]);
                 else
                     locale = new Locale(loc[0], loc[1]);
-                getResources().getConfiguration().setLocale(locale);
-                getResources().updateConfiguration(getResources().getConfiguration(), getResources().getDisplayMetrics());
+                this.getBaseContext().getResources().getConfiguration().setLocale(locale);
+                this.getBaseContext().getResources().updateConfiguration(getResources().getConfiguration(), getResources().getDisplayMetrics());
             }
         } else {
             toast("系统版本太低, 无法设置语言首选项");
