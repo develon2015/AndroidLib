@@ -27,7 +27,7 @@ public class Shell {
     private void init() {
         try {
             psh = Runtime.getRuntime().exec(SH_PATH);
-            System.out.print("新的sh进程: " + run("echo $$", 200));
+            System.out.println("新的sh进程: " + run("echo -n $$", 200));
         } catch (Exception e) {
             throw new RuntimeException("无法启动 shell");
         }
@@ -35,7 +35,7 @@ public class Shell {
 
     /**
      * 先发送 ^C, 再使用全局 Shell 执行命令 <br>
-     * 获取上一次执行的返回值, 请使用命令"echo $?"
+     * 获取上一次执行的返回值, 请调用 getLastCode() 或使用命令"echo -n $?"
      * @param cmd 要执行的命令
      * @param deley 延迟时间
      * @return
@@ -45,6 +45,7 @@ public class Shell {
             // 尝试杀死旧的不可用psh进程
             try {
                 sh.getProcess().destroy();
+                Log.e("sh", sh.getProcess().toString());
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -55,7 +56,7 @@ public class Shell {
 
     /**
      * 执行命令 <br>
-     * 获取上一次执行的返回值, 请使用命令"echo $?"
+     * 获取上一次执行的返回值, 请调用 getLastCode() 或使用命令"echo -n $?"
      * @param cmd 要执行的命令
      * @param deley 延迟时间
      * @return
@@ -140,13 +141,12 @@ public class Shell {
                 return false;
         }
         try {
-            String abc = run("echo abc", 200);
+            String abc = run("echo -n abc", 200);
             if (abc != null && "abc".equals(abc.trim()))
                 return true;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        Log.e("sh", this.psh.toString() + "唔可用");
         return false;
     }
 
@@ -162,7 +162,7 @@ public class Shell {
         if (!isAlive())
             return false;
 
-        String user = run("echo $USER", 0);
+        String user = run("echo -n $USER", 0);
         String ids = run("id", 0);
 
         if (user == null || ids == null)
@@ -171,29 +171,32 @@ public class Shell {
         user = user.trim();
         ids = ids.trim();
 
-        if ("root".equals(user) && ids.matches("^.*(.*=0\\(root\\).*){3}.*"))
+        if ("root".equals(user) && ids.matches("^.*(.*=0\\(root\\).*){2}.*"))
             return true;
         return false;
     }
 
 
     private static final String SUCHECK = "su exited";
+
+    /**
+     * 提升 shell 权限
+     * @return
+     */
     public boolean waitSU() {
         if (!isAlive()) {
             init();
         }
+        if (isSU())
+            return true;
 
-        String sucheck = run("su; echo " + SUCHECK, 200);
-        if (sucheck == null) {
-            // su 未结束, 或已取得权限
-            while (!isAlive());
-            return isSU();
-        } else if (SUCHECK.equals(sucheck)) {
-            return false;
+        String sucheck = run("su; echo -n " + SUCHECK, 200);
+        while (!isAlive()) {
+            try {
+                Thread.sleep(10);
+            } catch (InterruptedException e) { }
         }
-
-        Log.e("罕见情况", sucheck);
-        return false;
+        return isSU();
     }
 
     /**
@@ -201,12 +204,13 @@ public class Shell {
      * @return [0, 255], -1 失败
      */
     public int getLastCode() {
-        String r = run("echo $?", 200);
+        String r = run("echo -n $?", 200);
         try {
-            int exitCode = Integer.parseInt(r);
+            int exitCode = Integer.parseInt(r.trim());
             if (exitCode >= 0 && exitCode <= 255)
                 return exitCode;
         } catch (Exception e) { }
+        Log.e("r", r + ".");
         return -1;
     }
 
